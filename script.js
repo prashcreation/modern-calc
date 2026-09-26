@@ -1,116 +1,154 @@
-let currentNumber = "";
+let currentNumber = "0";
 let previousNumber = "";
-let operator = "";
+let operator = null;
 
 const currentDisplay = document.getElementById("current");
 const previousDisplay = document.getElementById("previous");
 
-function appendNumber(number) {
+function updateDisplay() {
+    currentDisplay.innerText = currentNumber;
+    previousDisplay.innerText = previousNumber;
+}
 
-    if (number === "." && currentNumber.includes(".")) {
-        return;
-    }
+function appendNumber(number) {
+    if (number === "." && currentNumber.includes(".")) return;
 
     if (currentNumber === "0" && number !== ".") {
-        currentNumber = "";
+        currentNumber = number;
+    } else {
+        currentNumber += number;
     }
-
-    currentNumber += number;
 
     updateDisplay();
 }
 
 function chooseOperator(selectedOperator) {
+    if (currentNumber === "" && previousNumber === "") return;
 
-    if (currentNumber === "" && previousNumber === "") {
-        return;
-    }
-
-    if (currentNumber !== "" && previousNumber !== "") {
+    if (previousNumber !== "") {
         calculate();
     }
 
     operator = selectedOperator;
-
-    previousNumber = currentNumber;
-    currentNumber = "";
+    previousNumber = currentNumber + " " + operator;
+    currentNumber = "0";
 
     updateDisplay();
 }
 
 function calculate() {
+    if (!operator || previousNumber === "") return;
 
-    if (previousNumber === "" || currentNumber === "" || operator === "") {
-        return;
-    }
-
-    const first = parseFloat(previousNumber);
-    const second = parseFloat(currentNumber);
+    let parts = previousNumber.split(" ");
+    let firstNumber = parseFloat(parts[0]);
+    let secondNumber = parseFloat(currentNumber);
 
     let result;
 
     switch (operator) {
-
         case "+":
-            result = first + second;
+            result = firstNumber + secondNumber;
             break;
 
         case "-":
-            result = first - second;
+            result = firstNumber - secondNumber;
             break;
 
         case "*":
-            result = first * second;
+            result = firstNumber * secondNumber;
             break;
 
         case "/":
-            if (second === 0) {
+            if (secondNumber === 0) {
                 currentNumber = "Error";
+                operator = null;
                 previousNumber = "";
-                operator = "";
                 updateDisplay();
                 return;
             }
-
-            result = first / second;
+            result = firstNumber / secondNumber;
             break;
 
         case "%":
-            result = first % second;
+            result = firstNumber % secondNumber;
             break;
     }
 
     currentNumber = String(result);
     previousNumber = "";
-    operator = "";
+    operator = null;
 
     updateDisplay();
 }
 
 function clearDisplay() {
-
-    currentNumber = "";
+    currentNumber = "0";
     previousNumber = "";
-    operator = "";
-
+    operator = null;
     updateDisplay();
 }
 
 function deleteNumber() {
-
-    currentNumber = currentNumber.slice(0, -1);
+    if (currentNumber.length === 1) {
+        currentNumber = "0";
+    } else {
+        currentNumber = currentNumber.slice(0, -1);
+    }
 
     updateDisplay();
 }
 
-function updateDisplay() {
 
-    currentDisplay.textContent = currentNumber || "0";
+/* =========================
+   KEYBOARD SUPPORT
+   ========================= */
 
-    if (operator && previousNumber) {
-        previousDisplay.textContent =
-            `${previousNumber} ${operator}`;
-    } else {
-        previousDisplay.textContent = "";
+document.addEventListener("keydown", function (event) {
+
+    // Numbers 0-9
+    if (event.key >= "0" && event.key <= "9") {
+        appendNumber(event.key);
     }
-}
+
+    // Decimal point
+    else if (event.key === ".") {
+        appendNumber(".");
+    }
+
+    // Operators
+    else if (event.key === "+") {
+        chooseOperator("+");
+    }
+
+    else if (event.key === "-") {
+        chooseOperator("-");
+    }
+
+    else if (event.key === "*") {
+        chooseOperator("*");
+    }
+
+    else if (event.key === "/") {
+        event.preventDefault();
+        chooseOperator("/");
+    }
+
+    else if (event.key === "%") {
+        chooseOperator("%");
+    }
+
+    // Enter or =
+    else if (event.key === "Enter" || event.key === "=") {
+        calculate();
+    }
+
+    // Escape = AC
+    else if (event.key === "Escape") {
+        clearDisplay();
+    }
+
+    // Backspace = delete
+    else if (event.key === "Backspace") {
+        deleteNumber();
+    }
+});
